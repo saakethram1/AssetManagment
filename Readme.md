@@ -23,6 +23,9 @@ dotnet tool install --global dotnet-ef
 dotnet ef migrations add <MigrationName>
 dotnet ef database update
 
+Login with the credentials:
+set up in the appsettings.json file
+
 ### 1. Clone the repository
 ```bash
 git clone https://github.com/yourusername/AssetManagementSystem.git
