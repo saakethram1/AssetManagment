@@ -1,0 +1,103 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using AssetManagment.Models.Domain
+@using AssetManagment.Models.Enums  
+@if (IsOpen)
+{
+    <div class="amodal-backdrop " @onclick="() => OnCancel.InvokeAsync()">
+        <div class="amodal d-flex flex-column" @onclick:stopPropagation>
+            <div class="d-flex justify-content-between align-items-center border-bottom p-3">
+                <h5 class="m-0">@Title</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary"
+                        @onclick="() => OnCancel.InvokeAsync()">
+                    ✕
+                </button>
+            </div>
+
+            <EditForm Model="editModel" OnValidSubmit="Submit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="p-3 amodal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <InputText class="form-control" @bind-Value="editModel.FullName" />
+                        <ValidationMessage For="() => editModel.FullName" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Department</label>
+                        <InputText class="form-control" @bind-Value="editModel.Department" />
+                        <ValidationMessage For="() => editModel.Department" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <InputText class="form-control" @bind-Value="editModel.Email" />
+                        <ValidationMessage For="() => editModel.Email" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Phone</label>
+                        <InputText class="form-control" @bind-Value="editModel.PhoneNumber" />
+                        <ValidationMessage For="() => editModel.PhoneNumber" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Designation</label>
+                        <InputText class="form-control" @bind-Value="editModel.Designation" />
+                        <ValidationMessage For="() => editModel.Designation" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        
+                            <InputSelect class="form-select" @bind-Value="editModel.Status">
+                                @foreach (var val in Enum.GetValues(editModel.Status.GetType()))
+                                {
+                                    <option value="@val">@val</option>
+                                }
+                            </InputSelect>
+                        <ValidationMessage For="() => editModel.Status" />
+                    </div>
+                </div>
+
+                <div class="border-top p-3 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-secondary" @onclick="() => OnCancel.InvokeAsync()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string Title { get; set; } = "Employee";
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public Employee Model { get; set; } = new();
+    [Parameter] public EventCallback<Employee> OnSave { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private Employee editModel = new();
+
+    protected override void OnParametersSet()
+    {
+        if (Model is not null)
+        {
+            editModel = new Employee
+            {
+                Id = Model.Id,
+                FullName = Model.FullName ?? string.Empty,
+                Department = Model.Department,
+                Email = Model.Email ?? string.Empty,
+                PhoneNumber = Model.PhoneNumber,
+                Designation = Model.Designation,
+                Status = Model.Status
+            };
+        }
+    }
+
+    private async Task Submit()
+    {
+        await OnSave.InvokeAsync(editModel);
+    }
+}

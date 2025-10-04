@@ -1,0 +1,394 @@
+﻿@page "/assignments"
+@using AssetManagment.Models.DTO
+@using AssetManagment.Models.Domain
+@using AssetManagment.Services.Interfaces
+@inject IAssetQueryService AssetQueryService
+@inject IAssignmentService AssignmentService
+@inject IEmployeeService EmployeeService
+@rendermode InteractiveServer
+
+
+<div class="row mb-3">
+    <div class="col">
+        <div class="card p-2">
+            <strong>Total Assets:</strong> @Dashboard?.TotalAssets
+        </div>
+    </div>
+    <div class="col">
+        <div class="card p-2">
+            <strong>Assigned:</strong> @Dashboard?.AssignedAssets
+        </div>
+    </div>
+    <div class="col">
+        <div class="card p-2">
+            <strong>Available:</strong> @Dashboard?.AvailableAssets
+        </div>
+    </div>
+    <div class="col">
+        <div class="card p-2">
+            <strong>Under Repair:</strong> @Dashboard?.UnderRepair
+        </div>
+    </div>
+    <div class="col">
+        <div class="card p-2">
+            <strong>Retired:</strong> @Dashboard?.Retired
+        </div>
+    </div>
+    <div class="col">
+        <div class="card p-2">
+            <strong>Spare:</strong> @Dashboard?.SpareAssets
+        </div>
+    </div>
+</div>
+
+<div class="card p-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="m-0">Assigned Assets</h5>
+        <div>
+            <button class="btn btn-sm btn-outline-primary me-2" @onclick="OpenAssignOverlay">Assign Asset</button>
+        </div>
+    </div>
+
+    <div class="mb-2 row g-2">
+        <div class="col-auto">
+            <input class="form-control" placeholder="serial search" @bind="SerialSearch" @bind:event="oninput" />
+        </div>
+        <div class="col-auto">
+            <input class="form-control" placeholder="employee search" @bind="EmployeeSearch" @bind:event="oninput" />
+        </div>
+
+        <!-- Asset types filter (scrollable) -->
+        <div class="col-12 mt-2">
+            <label class="form-label">Asset Types</label>
+            <div class="border rounded p-2" style="max-height:140px; overflow:auto;">
+                @if (FilterValues?.AssetTypes != null)
+                {
+                    foreach (var t in FilterValues.AssetTypes)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="at_@t" checked="@SelectedAssetTypes.Contains(t)" @onchange="() => ToggleAssetType(t)" />
+                            <label class="form-check-label" for="at_@t">@t</label>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-muted">Loading types…</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th @onclick='() => SortBy("Asset")'>
+                        Asset @(sortColumn == "Asset" ? (sortAscending ? "↑" : "↓") : "")
+                    </th>
+                    <th @onclick='() => SortBy("Type")'>
+                        Type @(sortColumn == "Type" ? (sortAscending ? "↑" : "↓") : "")
+                    </th>
+                    <th @onclick='() => SortBy("Serial")'>
+                        Serial @(sortColumn == "Serial" ? (sortAscending ? "↑" : "↓") : "")
+                    </th>
+                    <th @onclick='() => SortBy("Employee")'>
+                        Employee @(sortColumn == "Employee" ? (sortAscending ? "↑" : "↓") : "")
+                    </th>
+                    <th @onclick='() => SortBy("Assigned")'>
+                        Assigned @(sortColumn == "Assigned" ? (sortAscending ? "↑" : "↓") : "")
+                    </th>
+                    <th @onclick='() => SortBy("Returned")'>
+                        Returned @(sortColumn == "Returned" ? (sortAscending ? "↑" : "↓") : "")
+                    </th>
+                    <th>Notes</th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (History != null && History.Any())
+                {
+                    foreach (var h in History)
+                    {
+                        <tr>
+                            <td>@h.AssetName</td>
+                            <td>@h.AssetType</td>
+                            <td>@h.SerialNumber</td>
+                            <td>@h.EmployeeName</td>
+                            <td>@h.AssignedDate.ToLocalTime()</td>
+                            <td>@(h.ReturnedDate.HasValue? h.ReturnedDate.Value.ToLocalTime().ToString() : "—")</td>
+                            <td>@h.Notes</td>
+                            <td>
+                                @if (h.ReturnedDate == null)
+                                {
+                                    <button class="btn btn-sm btn-success" @onclick="() => MarkReturned(h.AssignmentId)">Return</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">No history</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination controls -->
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <small>
+                @if (TotalItems.HasValue)
+                {
+                    var start = ((CurrentPage - 1) * PageSize) + 1;
+                    var end = Math.Min(CurrentPage * PageSize, TotalItems.Value);
+                    <text>Showing @start - @end of @TotalItems.Value</text>
+                }
+                else
+                {
+                    <text>Page @CurrentPage</text>
+                }
+            </small>
+        </div>
+
+        <div class="btn-group" role="group">
+            <button class="btn btn-sm btn-outline-secondary" @onclick="PrevPage" disabled="@(CurrentPage <= 1)">Prev</button>
+
+            <div class="input-group input-group-sm" style="width:120px;">
+                <input class="form-control" type="number" min="1" value="@CurrentPage" @onchange="OnPageInputChanged" />
+                <span class="input-group-text">/ @TotalPagesDisplay</span>
+            </div>
+
+            <button class="btn btn-sm btn-outline-secondary" @onclick="NextPage" disabled="@(TotalPages.HasValue && CurrentPage >= TotalPages.Value)">Next</button>
+        </div>
+    </div>
+</div>
+
+<AssignModal @ref="assignModalRef" OnAssigned="OnAssignedHandler" />
+
+@code {
+    private AssignModal? assignModalRef;
+    private List<AssignmentHistory>? History;
+
+    // bound search properties (now debounced)
+    private string? _serialSearch;
+    private string? SerialSearch
+    {
+        get => _serialSearch;
+        set
+        {
+            _serialSearch = value;
+            CurrentPage = 1;
+            DebounceLoadHistory();
+        }
+    }
+
+    private string? _employeeSearch;
+    private string? EmployeeSearch
+    {
+        get => _employeeSearch;
+        set
+        {
+            _employeeSearch = value;
+            CurrentPage = 1;
+            DebounceLoadHistory();
+        }
+    }
+
+    private AssetDashboard? Dashboard;
+    private AssetFilterValues? FilterValues;
+    private HashSet<string> SelectedAssetTypes = new();
+
+    // pagination
+    private int CurrentPage { get; set; } = 1;
+    private int PageSize { get; set; } = 20;
+    private int? TotalPages { get; set; }
+    private int? TotalItems { get; set; }
+    private string TotalPagesDisplay => TotalPages?.ToString() ?? "?";
+
+    // debounce
+    private CancellationTokenSource? _ctsSearch;
+    private readonly int _debounceMs = 400;
+    private string? sortColumn;
+    private bool sortAscending = true;
+
+    private void SortBy(string column)
+    {
+        if (sortColumn == column)
+        {
+            sortAscending = !sortAscending;
+        }
+        else
+        {
+            sortColumn = column;
+            sortAscending = true;
+        }
+
+        ApplySorting();
+    }
+
+    private void ApplySorting()
+    {
+        if (History == null) return;
+
+        History = sortColumn switch
+        {
+            "Asset" => sortAscending ? History.OrderBy(h => h.AssetName).ToList() : History.OrderByDescending(h => h.AssetName).ToList(),
+            "Type" => sortAscending ? History.OrderBy(h => h.AssetType).ToList() : History.OrderByDescending(h => h.AssetType).ToList(),
+            "Serial" => sortAscending ? History.OrderBy(h => h.SerialNumber).ToList() : History.OrderByDescending(h => h.SerialNumber).ToList(),
+            "Employee" => sortAscending ? History.OrderBy(h => h.EmployeeName).ToList() : History.OrderByDescending(h => h.EmployeeName).ToList(),
+            "Assigned" => sortAscending ? History.OrderBy(h => h.AssignedDate).ToList() : History.OrderByDescending(h => h.AssignedDate).ToList(),
+            "Returned" => sortAscending ? History.OrderBy(h => h.ReturnedDate).ToList() : History.OrderByDescending(h => h.ReturnedDate).ToList(),
+            _ => History
+        };
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Dashboard = await AssetQueryService.GetDashboardAsync();
+        FilterValues = await AssetQueryService.GetFilterValuesAsync();
+        await LoadHistory(); 
+    }
+
+    private void ToggleAssetType(string t)
+    {
+        if (!SelectedAssetTypes.Add(t)) SelectedAssetTypes.Remove(t);
+        CurrentPage = 1;
+        DebounceLoadHistory();
+    }
+
+    private void ApplyFilters()
+    {
+        CurrentPage = 1;
+        DebounceLoadHistory();
+    }
+
+    private async Task LoadHistory(int pageNumber = 1, int pageSize = 25)
+    {
+        var assetTypes = SelectedAssetTypes.Any() ? SelectedAssetTypes.ToList() : null;
+
+        var page = await AssetQueryService.SearchAssignmentHistoryPagedAsync(
+            assetTypes,
+            null,
+            SerialSearch ?? string.Empty,
+            EmployeeSearch ?? string.Empty,
+            null,
+            true,    
+            pageNumber,
+            pageSize
+        );
+
+        History = page.Items ?? new List<AssignmentHistory>();
+
+        try
+        {
+            var totalCountProp = page.GetType().GetProperty("TotalCount")?.GetValue(page) as int?;
+            var totalPagesProp = page.GetType().GetProperty("TotalPages")?.GetValue(page) as int?;
+            var pageNumberProp = page.GetType().GetProperty("PageNumber")?.GetValue(page) as int?;
+            var pageSizeProp = page.GetType().GetProperty("PageSize")?.GetValue(page) as int?;
+
+            if (totalCountProp.HasValue)
+            {
+                TotalItems = totalCountProp.Value;
+                if (pageSizeProp.HasValue && pageSizeProp.Value > 0)
+                    TotalPages = (int)Math.Ceiling((double)TotalItems.Value / pageSizeProp.Value);
+            }
+            else if (totalPagesProp.HasValue)
+            {
+                TotalPages = totalPagesProp.Value;
+            }
+
+            if (pageNumberProp.HasValue) CurrentPage = pageNumberProp.Value;
+            else CurrentPage = pageNumber;
+
+            PageSize = pageSizeProp ?? pageSize;
+        }
+        catch
+        {
+            CurrentPage = pageNumber;
+            PageSize = pageSize;
+        }
+
+        StateHasChanged();
+    }
+
+    private void DebounceLoadHistory(int delayMs = -1)
+    {
+        var ms = delayMs > 0 ? delayMs : _debounceMs;
+
+        _ctsSearch?.Cancel();
+        _ctsSearch?.Dispose();
+        _ctsSearch = new CancellationTokenSource();
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var token = _ctsSearch.Token;
+                await Task.Delay(ms, token);
+                await InvokeAsync(() => LoadHistory(CurrentPage, PageSize));
+            }
+            catch (OperationCanceledException) { }
+        });
+    }
+
+    // page controls
+    private async void PrevPage()
+    {
+        if (CurrentPage <= 1) return;
+        CurrentPage--;
+        await LoadHistory(CurrentPage, PageSize);
+    }
+
+    private async void NextPage()
+    {
+        if (TotalPages.HasValue && CurrentPage >= TotalPages.Value) return;
+        CurrentPage++;
+        await LoadHistory(CurrentPage, PageSize);
+    }
+
+    private async void OnPageInputChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e?.Value?.ToString(), out var p) && p >= 1)
+        {
+            CurrentPage = p;
+            await LoadHistory(CurrentPage, PageSize);
+        }
+    }
+
+    private async void OnPageSizeChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e?.Value?.ToString(), out var s) && s > 0)
+        {
+            PageSize = s;
+            CurrentPage = 1;
+            await LoadHistory(CurrentPage, PageSize);
+        }
+    }
+
+    private async Task MarkReturned(int assignmentId)
+    {
+        await AssignmentService.ReturnAsync(assignmentId, DateTime.UtcNow);
+        await LoadHistory(CurrentPage, PageSize);
+    }
+
+    private async Task OpenAssignOverlay()
+    {
+        if (assignModalRef != null) await assignModalRef.OpenAsync();
+    }
+
+    private async Task OnAssignedHandler()
+    {
+        await LoadHistory(CurrentPage, PageSize);
+    }
+
+    public void Dispose()
+    {
+        _ctsSearch?.Cancel();
+        _ctsSearch?.Dispose();
+    }
+}

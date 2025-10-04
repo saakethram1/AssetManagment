@@ -1,0 +1,443 @@
+﻿@using AssetManagment.Models.DTO
+@using AssetManagment.Models.Domain
+@using AssetManagment.Services.Interfaces
+@inject IAssetQueryService AssetQueryService
+@inject IAssignmentService AssignmentService
+@inject IEmployeeService EmployeeService
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+
+<div class="assign-overlay" style="display:@(IsOpen ? "block" : "none")">
+    <div class="assign-panel card p-3" @onclick:stopPropagation>
+        
+        @if(SelectedAssetForAssign == null){
+            <div>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="m-0">Assign Asset</h5>
+            <button class="btn btn-sm btn-outline-secondary" @onclick="Close">✕</button>
+        </div>
+
+        <div class="mb-2">
+            <label>Search serial</label>
+            <input class="form-control" @bind="SerialSearch" @bind:event="oninput" placeholder="search serial (partial)" />
+        </div>
+
+        <div class="mb-2">
+            <label>Asset Types</label>
+            <div>
+                @if (FilterValues != null)
+                {
+                    foreach (var t in FilterValues.AssetTypes)
+                    {
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="type_@t" @onchange="ctx => { ToggleType(t); }" checked="@SelectedTypes.Contains(t)" />
+                            <label class="form-check-label" for="type_@t">@t</label>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <!-- NOTE: Status checkboxes removed — we always use the 'Available' status from filter values -->
+
+        <div>
+            @if (Assets != null)
+            {
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Serial</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var a in Assets)
+                        {
+                            <tr>
+                                <td>@a.AssetName</td>
+                                <td>@a.AssetType</td>
+                                <td>@a.SerialNumber</td>
+                                <td>
+                                    <button class="btn btn-sm btn-success" @onclick="() => SelectForAssign(a)">Assign</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small>
+                            @if (TotalItems.HasValue)
+                            {
+                                var start = ((CurrentPage - 1) * PageSize) + 1;
+                                var end = Math.Min(CurrentPage * PageSize, TotalItems.Value);
+                                <text>Showing @start - @end of @TotalItems.Value</text>
+                            }
+                            else
+                            {
+                                <text>Page @CurrentPage</text>
+                            }
+                        </small>
+                    </div>
+
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-outline-secondary" @onclick="PrevPage" disabled="@(CurrentPage <= 1)">Prev</button>
+                        <div class="input-group input-group-sm" style="width:120px;">
+                            <input class="form-control" type="number" min="1" value="@CurrentPage" @onchange="OnPageInputChanged" />
+                            <span class="input-group-text">/ @TotalPagesDisplay</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary" @onclick="NextPage" disabled="@(TotalPages.HasValue && CurrentPage >= TotalPages.Value)">Next</button>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <small>Page size</small>
+                        <select class="form-select form-select-sm" style="width:90px;" @onchange="OnPageSizeChanged">
+                            <option value="5" selected="@(PageSize == 5)">5</option>
+                            <option value="10" selected="@(PageSize == 10)">10</option>
+                            <option value="25" selected="@(PageSize == 25)">25</option>
+                            <option value="50" selected="@(PageSize == 50)">50</option>
+                            <option value="100" selected="@(PageSize == 100)">100</option>
+                        </select>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="text-muted">No assets loaded</div>
+            }
+        </div>
+        </div>
+        }
+
+        @if (SelectedAssetForAssign != null)
+        {
+            <div class="border-top pt-2 mt-2">
+                <h6>Assign: @SelectedAssetForAssign.AssetName (@SelectedAssetForAssign.SerialNumber)</h6>
+
+                <!-- Employee autocomplete appears only after clicking Assign -->
+                <div class="mb-2">
+                    <label>Employee</label>
+                    <div class="d-flex gap-2">
+                        <input class="form-control"
+                               placeholder="type to search employees (click a suggestion to select)"
+                               @bind="EmployeeTypingText"
+                               @bind:event="oninput"
+                               @onfocus="OnEmployeeInputFocus" />
+                        <button class="btn btn-outline-secondary" @onclick="ClearSelectedEmployee" title="Clear selection">Clear</button>
+                    </div>
+
+                    @if (ShowEmployeeSuggestions && EmployeeSuggestions?.Any() == true)
+                    {
+                        <div class="list-group position-relative" style="z-index:2000;">
+                            @foreach (var emp in EmployeeSuggestions)
+                            {
+                                <button class="list-group-item list-group-item-action" @onclick="() => SelectEmployeeSuggestion(emp)">
+                                    @emp.FullName (@emp.Email)
+                                </button>
+                            }
+                        </div>
+                    }
+
+                    <div class="mt-2">
+                        <small>Selected: @SelectedEmployeeDisplay</small>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label>Notes</label>
+                    <textarea class="form-control" @bind="Notes"></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" @onclick="ConfirmAssign">Confirm Assign</button>
+                    <button class="btn btn-outline-secondary" @onclick="() => SelectedAssetForAssign = null">Cancel</button>
+                </div>
+            </div>
+        }
+
+    </div>
+    <div class="assign-backdrop" @onclick="Close"></div>
+</div>
+
+@code {
+    // UI state
+    private bool IsOpen { get; set; }
+    private AssetFilterValues? FilterValues;
+    private List<AssetSearchResult>? Assets;
+    private HashSet<string> SelectedTypes = new();
+
+    // Pagination
+    private int CurrentPage { get; set; } = 1;
+    private int PageSize { get; set; } = 10;
+    private int? TotalPages { get; set; }
+    private int? TotalItems { get; set; }
+    private string TotalPagesDisplay => TotalPages?.ToString() ?? "?";
+
+    // Serial filter
+    private string? _serialSearch;
+    private string? SerialSearch
+    {
+        get => _serialSearch;
+        set
+        {
+            _serialSearch = value;
+            CurrentPage = 1; 
+            DebounceLoadAssets();
+        }
+    }
+
+    
+    private AssetSearchResult? SelectedAssetForAssign;
+    private string? EmployeeIdToAssign;
+    private string? Notes;
+
+    private List<Employee> Employees = new();
+    private List<Employee> EmployeeSuggestions = new();
+    private bool ShowEmployeeSuggestions = false;
+    private string SelectedEmployeeDisplay => Employees.FirstOrDefault(e => e.Id.ToString() == EmployeeIdToAssign)?.FullName ?? "(none)";
+
+    [Parameter] public EventCallback OnAssigned { get; set; }
+
+    private CancellationTokenSource? _ctsAssets;
+    private CancellationTokenSource? _ctsEmployees;
+
+    private int? AvailableStatusKey;
+
+    public async Task OpenAsync()
+    {
+        IsOpen = true;
+        CurrentPage = 1;
+        await LoadFilterValues();
+        await PreloadEmployees();
+
+        // determine available status and set AvailableStatusKey
+        if (FilterValues != null && FilterValues.Statuses.Any())
+        {
+            var availableStatus = FilterValues.Statuses.FirstOrDefault(kv => kv.Value == "Available");
+            AvailableStatusKey = availableStatus.Key;
+        }
+
+        await LoadAssetsImmediate(CurrentPage, PageSize);
+        StateHasChanged();
+    }
+
+    private void Close()
+    {
+        IsOpen = false;
+        SelectedAssetForAssign = null;
+        ShowEmployeeSuggestions = false;
+    }
+
+    private async Task LoadFilterValues()
+    {
+        FilterValues = await AssetQueryService.GetFilterValuesAsync();
+    }
+
+    private async Task PreloadEmployees()
+    {
+        
+        var page = await EmployeeService.GetPagedAsync(1, 200, null);
+        Employees = page.Items ?? new List<Employee>();
+    }
+
+    private void ToggleType(string t)
+    {
+        if (!SelectedTypes.Add(t)) SelectedTypes.Remove(t);
+        CurrentPage = 1; 
+        DebounceLoadAssets();
+    }
+
+    private async Task LoadAssetsImmediate(int pageNumber, int pageSize)
+    {
+        
+        var statuses = AvailableStatusKey.HasValue ? new List<int> { AvailableStatusKey.Value } : null;
+
+        var page = await AssetQueryService.SearchAssetsPagedAsync(
+            SelectedTypes.ToList(),
+            statuses,
+            SerialSearch,
+            pageNumber,
+            pageSize);
+
+        Assets = page.Items ?? new List<AssetSearchResult>();
+
+        try
+        {
+            var pageNumberProp = page.GetType().GetProperty("PageNumber")?.GetValue(page) as int?;
+            var pageSizeProp = page.GetType().GetProperty("PageSize")?.GetValue(page) as int?;
+            var totalCountProp = page.GetType().GetProperty("TotalCount")?.GetValue(page) as int?;
+            var totalPagesProp = page.GetType().GetProperty("TotalPages")?.GetValue(page) as int?;
+
+            if (totalCountProp.HasValue)
+            {
+                TotalItems = totalCountProp.Value;
+                if (pageSizeProp.HasValue && pageSizeProp.Value > 0)
+                    TotalPages = (int)Math.Ceiling((double)TotalItems.Value / pageSizeProp.Value);
+            }
+            else if (totalPagesProp.HasValue)
+            {
+                TotalPages = totalPagesProp.Value;
+            }
+
+            // fallbacks
+            if (pageNumberProp.HasValue) CurrentPage = pageNumberProp.Value;
+            else CurrentPage = pageNumber;
+
+            PageSize = pageSizeProp ?? pageSize;
+        }
+        catch
+        {
+            CurrentPage = pageNumber;
+            PageSize = pageSize;
+        }
+
+        StateHasChanged();
+    }
+
+    private void SelectForAssign(AssetSearchResult a)
+    {
+        SelectedAssetForAssign = a;
+        ShowEmployeeSuggestions = false;
+        EmployeeTypingText = null;
+        EmployeeSuggestions = Employees.Take(10).ToList();
+        EmployeeIdToAssign = null;
+    }
+
+    private async Task ConfirmAssign()
+    {
+        if (SelectedAssetForAssign == null) return;
+        if (string.IsNullOrWhiteSpace(EmployeeIdToAssign) || !int.TryParse(EmployeeIdToAssign, out var empId))
+        {
+            await JS.InvokeVoidAsync("alert", "Select an employee (click a suggestion)");
+            return;
+        }
+
+        await AssignmentService.AssignAsync(SelectedAssetForAssign.Id, empId, Notes);
+        await OnAssigned.InvokeAsync();
+        await LoadAssetsImmediate(CurrentPage, PageSize);
+        SelectedAssetForAssign = null;
+        Notes = null;
+    }
+
+    private void ClearSelectedEmployee()
+    {
+        EmployeeIdToAssign = null;
+        EmployeeTypingText = null;
+        EmployeeSuggestions = Employees.Take(10).ToList();
+        ShowEmployeeSuggestions = false;
+    }
+
+    private void OnEmployeeInputFocus(FocusEventArgs e)
+    {
+        EmployeeSuggestions = Employees.Take(10).ToList();
+        ShowEmployeeSuggestions = true;
+    }
+
+    private string? _employeeTypingText;
+    private string? EmployeeTypingText
+    {
+        get => _employeeTypingText;
+        set
+        {
+            _employeeTypingText = value;
+            DebounceLoadEmployees();
+        }
+    }
+
+    private async void DebounceLoadEmployees(int delayMs = 300)
+    {
+        _ctsEmployees?.Cancel();
+        _ctsEmployees?.Dispose();
+        _ctsEmployees = new CancellationTokenSource();
+
+        try
+        {
+            var token = _ctsEmployees.Token;
+            await Task.Delay(delayMs, token);
+            await LoadEmployeeSuggestions(EmployeeTypingText);
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task LoadEmployeeSuggestions(string? q)
+    {
+        ShowEmployeeSuggestions = true;
+        if (string.IsNullOrWhiteSpace(q))
+        {
+            EmployeeSuggestions = Employees.Take(10).ToList();
+            StateHasChanged();
+            return;
+        }
+
+        var page = await EmployeeService.GetPagedAsync(1, 20, q);
+        EmployeeSuggestions = page.Items ?? new List<Employee>();
+        StateHasChanged();
+    }
+
+    private void SelectEmployeeSuggestion(Employee emp)
+    {
+        EmployeeIdToAssign = emp.Id.ToString();
+        EmployeeTypingText = emp.FullName; 
+        ShowEmployeeSuggestions = false;
+    }
+
+
+    private async void DebounceLoadAssets(int delayMs = 400)
+    {
+        _ctsAssets?.Cancel();
+        _ctsAssets?.Dispose();
+        _ctsAssets = new CancellationTokenSource();
+
+        try
+        {
+            var token = _ctsAssets.Token;
+            await Task.Delay(delayMs, token);
+            await LoadAssetsImmediate(CurrentPage, PageSize);
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private async void PrevPage()
+    {
+        if (CurrentPage <= 1) return;
+        CurrentPage--;
+        await LoadAssetsImmediate(CurrentPage, PageSize);
+    }
+
+    private async void NextPage()
+    {
+        if (TotalPages.HasValue && CurrentPage >= TotalPages.Value) return;
+        CurrentPage++;
+        await LoadAssetsImmediate(CurrentPage, PageSize);
+    }
+
+    private async void OnPageInputChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e?.Value?.ToString(), out var p) && p >= 1)
+        {
+            CurrentPage = p;
+            await LoadAssetsImmediate(CurrentPage, PageSize);
+        }
+    }
+
+    private async void OnPageSizeChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e?.Value?.ToString(), out var s) && s > 0)
+        {
+            PageSize = s;
+            CurrentPage = 1;
+            await LoadAssetsImmediate(CurrentPage, PageSize);
+        }
+    }
+
+    public void Dispose()
+    {
+        _ctsAssets?.Cancel();
+        _ctsAssets?.Dispose();
+        _ctsEmployees?.Cancel();
+        _ctsEmployees?.Dispose();
+    }
+}

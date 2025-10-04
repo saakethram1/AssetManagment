@@ -1,0 +1,194 @@
+﻿@page "/employees"
+@using AssetManagment.Models.DTO
+@using AssetManagment.Models.Domain
+@using AssetManagment.Services.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject IEmployeeService EmployeeService
+@inject NavigationManager Nav
+
+<h3>Employees</h3>
+
+<div class="d-flex align-items-center mb-3">
+    <input class="form-control me-2" style="max-width: 300px"
+           placeholder="Search name/email/department"
+           @bind="search" @bind:event="oninput" @bind:after="DebouncedLoad" />
+    <button class="btn btn-primary" @onclick="OpenCreate">+ Add Employee</button>
+</div>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else if (paged is null || paged.Items.Count == 0)
+{
+    <p>No employees found.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Designation</th>
+                <th>Status</th>
+                <th style="width:160px"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var e in paged.Items)
+            {
+                <tr>
+                    <td>@e.FullName</td>
+                    <td>@e.Department</td>
+                    <td>@e.Email</td>
+                    <td>@e.PhoneNumber</td>
+                    <td>@e.Designation</td>
+                    <td>@e.Status</td>
+                    <td>
+                        <button class="btn btn-sm btn-link" @onclick="() => OpenEdit(e)">Edit</button>
+                        <button class="btn btn-sm btn-link text-danger" @onclick="() => ConfirmDelete(e)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <nav>
+        <ul class="pagination">
+            <li class="page-item @(pageNumber == 1 ? "disabled" : "")">
+                <button class="page-link" @onclick="() => Load(pageNumber - 1)">Previous</button>
+            </li>
+            @for (var p = 1; p <= paged.TotalPages; p++)
+            {
+                var pageIndex = p;
+                <li class="page-item @(pageIndex == pageNumber ? "active" : "")">
+                    <button class="page-link" @onclick="() => Load(pageIndex)">@pageIndex</button>
+                </li>
+            }
+            <li class="page-item @(pageNumber == paged.TotalPages ? "disabled" : "")">
+                <button class="page-link" @onclick="() => Load(pageNumber + 1)">Next</button>
+            </li>
+        </ul>
+    </nav>
+}
+
+@if (toDelete is not null)
+{
+    <div class="alert alert-warning">
+        Delete <strong>@toDelete.FullName</strong>?
+        <button class="btn btn-danger btn-sm me-2" @onclick="DeleteNow">Yes</button>
+        <button class="btn btn-secondary btn-sm" @onclick="() => toDelete = null">Cancel</button>
+    </div>
+}
+
+<EmployeeForm Title="@(_mode == FormMode.Create ? "Create Employee" : "Edit Employee")"
+              IsOpen="@isOpen"
+              Model="@_model"
+              OnSave="Save"
+              OnCancel="Close" />
+
+@code {
+    private string? search;
+    private bool isLoading;
+    private PagedResult<AssetManagment.Models.Domain.Employee>? paged;
+    private AssetManagment.Models.Domain.Employee? toDelete;
+    private int pageNumber = 1;
+    private const int pageSize = 10;
+    @rendermode InteractiveServer
+
+    private CancellationTokenSource? _debounceCts;
+
+    private bool isOpen;
+    private FormMode _mode = FormMode.Create;
+    private Employee _model = new();
+
+    protected override async Task OnInitializedAsync() => await Load(1);
+
+    private async Task Load(int page)
+    {
+        isLoading = true;
+        pageNumber = page;
+        paged = await EmployeeService.GetPagedAsync(pageNumber, pageSize, search);
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private void OpenCreate()
+    {
+        _mode = FormMode.Create;
+        _model = new Employee(); // fresh model
+        isOpen = true;
+    }
+
+    private void OpenEdit(Employee e)
+    {
+        _mode = FormMode.Edit;
+        _model = Clone(e);
+        isOpen = true;
+    }
+
+    private void Close()
+    {
+        isOpen = false;
+        _model = new Employee();
+    }
+
+    private async Task Save(Employee emp)
+    {
+        if (_mode == FormMode.Create)
+        {
+            await EmployeeService.CreateAsync(emp);
+        }
+        else
+        {
+            await EmployeeService.UpdateAsync(emp);
+        }
+
+        isOpen = false;
+        await Load(pageNumber); 
+    }
+
+    private void ConfirmDelete(Employee e) => toDelete = e;
+
+    private async Task DeleteNow()
+    {
+        if (toDelete is null) return;
+        await EmployeeService.DeleteAsync(toDelete.Id);
+        toDelete = null;
+        await Load(pageNumber);
+    }
+
+    private async Task DebouncedLoad()
+    {
+        _debounceCts?.Cancel();
+        _debounceCts = new CancellationTokenSource();
+        var token = _debounceCts.Token;
+
+        try
+        {
+            await Task.Delay(300, token);
+            if (!token.IsCancellationRequested)
+            {
+                await Load(1);
+            }
+        }
+        catch (TaskCanceledException) { }
+    }
+
+    private static Employee Clone(Employee e) => new()
+    {
+        Id = e.Id,
+        FullName = e.FullName,
+        Department = e.Department,
+        Email = e.Email,
+        PhoneNumber = e.PhoneNumber,
+        Designation = e.Designation,
+        Status = e.Status
+    };
+
+    private enum FormMode { Create, Edit }
+}

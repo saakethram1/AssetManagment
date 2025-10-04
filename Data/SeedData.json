@@ -1,0 +1,478 @@
+{
+  "Employees": [
+    {
+      "FullName": "Amit Sharma",
+      "Email": "amit@company.com",
+      "Department": "IT",
+      "Designation": "Engineer",
+      "PhoneNumber": "9876543210",
+      "Status": 0
+    },
+    {
+      "FullName": "Neha Gupta",
+      "Email": "neha@company.com",
+      "Department": "HR",
+      "Designation": "HR Executive",
+      "PhoneNumber": "9123456780",
+      "Status": 0
+    },
+    {
+      "FullName": "Rahul Verma",
+      "Email": "rahul@company.com",
+      "Department": "Finance",
+      "Designation": "Accountant",
+      "PhoneNumber": "9988776655",
+      "Status": 0
+    },
+    {
+      "FullName": "Priya Mehta",
+      "Email": "priya@company.com",
+      "Department": "IT",
+      "Designation": "Software Developer",
+      "PhoneNumber": "9811122233",
+      "Status": 0
+    },
+    {
+      "FullName": "Suresh Reddy",
+      "Email": "suresh@company.com",
+      "Department": "Operations",
+      "Designation": "Operations Manager",
+      "PhoneNumber": "9776655443",
+      "Status": 0
+    },
+    {
+      "FullName": "Kavita Nair",
+      "Email": "kavita@company.com",
+      "Department": "Marketing",
+      "Designation": "Marketing Specialist",
+      "PhoneNumber": "9665544332",
+      "Status": 0
+    },
+    {
+      "FullName": "Arjun Singh",
+      "Email": "arjun@company.com",
+      "Department": "IT",
+      "Designation": "System Administrator",
+      "PhoneNumber": "9554433221",
+      "Status": 0
+    },
+    {
+      "FullName": "Meena Joshi",
+      "Email": "meena@company.com",
+      "Department": "HR",
+      "Designation": "Recruiter",
+      "PhoneNumber": "9443322110",
+      "Status": 0
+    },
+    {
+      "FullName": "Vikram Chauhan",
+      "Email": "vikram@company.com",
+      "Department": "Finance",
+      "Designation": "Financial Analyst",
+      "PhoneNumber": "9332211009",
+      "Status": 0
+    },
+    {
+      "FullName": "Anita Desai",
+      "Email": "anita@company.com",
+      "Department": "Admin",
+      "Designation": "Office Manager",
+      "PhoneNumber": "9221100998",
+      "Status": 0
+    },
+    {
+      "FullName": "Rajesh Kumar",
+      "Email": "rajesh@company.com",
+      "Department": "IT",
+      "Designation": "Network Engineer",
+      "PhoneNumber": "9110099887",
+      "Status": 0
+    },
+    {
+      "FullName": "Sneha Patil",
+      "Email": "sneha@company.com",
+      "Department": "Support",
+      "Designation": "Helpdesk Executive",
+      "PhoneNumber": "9009988776",
+      "Status": 0
+    },
+    {
+      "FullName": "Mohit Bansal",
+      "Email": "mohit@company.com",
+      "Department": "Sales",
+      "Designation": "Sales Manager",
+      "PhoneNumber": "9898877665",
+      "Status": 0
+    },
+    {
+      "FullName": "Ritika Kapoor",
+      "Email": "ritika@company.com",
+      "Department": "Sales",
+      "Designation": "Sales Executive",
+      "PhoneNumber": "9787766554",
+      "Status": 0
+    },
+    {
+      "FullName": "Ashok Malhotra",
+      "Email": "ashok@company.com",
+      "Department": "Operations",
+      "Designation": "Operations Executive",
+      "PhoneNumber": "9676655443",
+      "Status": 0
+    },
+    {
+      "FullName": "Deepa Menon",
+      "Email": "deepa@company.com",
+      "Department": "Finance",
+      "Designation": "Auditor",
+      "PhoneNumber": "9565544332",
+      "Status": 0
+    },
+    {
+      "FullName": "Nikhil Jain",
+      "Email": "nikhil@company.com",
+      "Department": "IT",
+      "Designation": "Full Stack Developer",
+      "PhoneNumber": "9454433221",
+      "Status": 0
+    },
+    {
+      "FullName": "Pooja Iyer",
+      "Email": "pooja@company.com",
+      "Department": "Marketing",
+      "Designation": "Content Writer",
+      "PhoneNumber": "9343322110",
+      "Status": 0
+    },
+    {
+      "FullName": "Manish Tiwari",
+      "Email": "manish@company.com",
+      "Department": "Support",
+      "Designation": "Technical Support",
+      "PhoneNumber": "9232211009",
+      "Status": 0
+    },
+    {
+      "FullName": "Shalini Rao",
+      "Email": "shalini@company.com",
+      "Department": "HR",
+      "Designation": "HR Manager",
+      "PhoneNumber": "9121100998",
+      "Status": 0
+    },
+    {
+      "FullName": "Karan Malhotra",
+      "Email": "malhotra@company.com",
+      "Department": "HR",
+      "Designation": "HR Manager",
+      "PhoneNumber": "9141100998",
+      "Status": 0
+    },
+    {
+      "FullName": "manaswini",
+      "Email": "manaswini@company.com",
+      "Department": "HR",
+      "Designation": "HR Manager",
+      "PhoneNumber": "9231100998",
+      "Status": 0
+    },
+    {
+      "FullName": "sanjay",
+      "Email": "sanjay@company.com",
+      "Department": "HR",
+      "Designation": "HR Manager",
+      "PhoneNumber": "9231100778",
+      "Status": 0
+    },
+    {
+      "FullName": "batre",
+      "Email": "batre@company.com",
+      "Department": "HR",
+      "Designation": "HR Manager",
+      "PhoneNumber": "9237700778",
+      "Status": 0
+    }
+
+  ],
+  
+    "Assets": [
+      {
+        "AssetName": "Dell Latitude 7420",
+        "AssetType": "Laptop",
+        "Model": "Dell / Latitude 7420",
+        "SerialNumber": "DL-7420-001",
+        "PurchaseDate": "2022-03-15",
+        "WarrantyExpiryDate": "2024-03-15",
+        "Condition": 0,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "Intel i7-1185G7, 16GB RAM, 512GB NVMe, 14\" FHD"
+      },
+      {
+        "AssetName": "HP ProDesk 400",
+        "AssetType": "Desktop",
+        "Model": "HP / ProDesk 400 G6",
+        "SerialNumber": "HP-400-XYZ",
+        "PurchaseDate": "2021-11-08",
+        "WarrantyExpiryDate": "2023-11-08",
+        "Condition": 0,
+        "Status": 0,
+        "IsSpare": true,
+        "Specifications": "Intel i5-10400, 8GB RAM, 256GB SSD"
+      },
+      {
+        "AssetName": "Lenovo ThinkPad X1",
+        "AssetType": "Laptop",
+        "Model": "Lenovo / ThinkPad X1 Carbon Gen 9",
+        "SerialNumber": "LN-TPX1-001",
+        "PurchaseDate": "2022-06-20",
+        "WarrantyExpiryDate": "2024-06-20",
+        "Condition": 0,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "Intel i7, 16GB RAM, 1TB NVMe, 14\""
+      },
+      {
+        "AssetName": "Apple MacBook Pro 14",
+        "AssetType": "Laptop",
+        "Model": "Apple / MacBook Pro 14\" (M1 Pro)",
+        "SerialNumber": "MBP-14-001",
+        "PurchaseDate": "2023-01-10",
+        "WarrantyExpiryDate": "2025-01-10",
+        "Condition": 1,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "Apple M1 Pro, 16GB Unified RAM, 512GB SSD"
+      },
+      {
+        "AssetName": "Dell Precision 3650",
+        "AssetType": "Desktop",
+        "Model": "Dell / Precision 3650",
+        "SerialNumber": "DL-PR3650-001",
+        "PurchaseDate": "2021-09-02",
+        "WarrantyExpiryDate": "2023-09-02",
+        "Condition": 0,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "Intel Xeon, 32GB RAM, 1TB SSD"
+      },
+      {
+        "AssetName": "HP EliteBook 840",
+        "AssetType": "Laptop",
+        "Model": "HP / EliteBook 840 G7",
+        "SerialNumber": "HP-EB840-001",
+        "PurchaseDate": "2022-04-12",
+        "WarrantyExpiryDate": "2024-04-12",
+        "Condition": 0,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "Intel i5, 16GB RAM, 512GB SSD"
+      },
+      {
+        "AssetName": "Samsung Galaxy S22",
+        "AssetType": "Mobile",
+        "Model": "Samsung / Galaxy S22",
+        "SerialNumber": "SM-S22-001",
+        "PurchaseDate": "2022-02-05",
+        "WarrantyExpiryDate": "2023-02-05",
+        "Condition": 0,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "Android, 8GB RAM, 128GB"
+      },
+      {
+        "AssetName": "Apple iPhone 14",
+        "AssetType": "Mobile",
+        "Model": "Apple / iPhone 14",
+        "SerialNumber": "IP-14-001",
+        "PurchaseDate": "2023-03-22",
+        "WarrantyExpiryDate": "2025-03-22",
+        "Condition": 1,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "iOS, 6GB RAM, 128GB"
+      },
+      {
+        "AssetName": "Canon LBP2900",
+        "AssetType": "Printer",
+        "Model": "Canon / LBP2900",
+        "SerialNumber": "CN-LBP2900-001",
+        "PurchaseDate": "2019-07-11",
+        "WarrantyExpiryDate": "2020-07-11",
+        "Condition": 3,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "Laser printer, mono"
+      },
+      {
+        "AssetName": "Epson EcoTank L3150",
+        "AssetType": "Printer",
+        "Model": "Epson / EcoTank L3150",
+        "SerialNumber": "EP-L3150-001",
+        "PurchaseDate": "2020-08-30",
+        "WarrantyExpiryDate": "2022-08-30",
+        "Condition": 0,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "Ink tank, color"
+      },
+      {
+        "AssetName": "Cisco Catalyst 2960",
+        "AssetType": "Switch",
+        "Model": "Cisco / Catalyst 2960",
+        "SerialNumber": "CS-2960-001",
+        "PurchaseDate": "2018-05-14",
+        "WarrantyExpiryDate": "2021-05-14",
+        "Condition": 1,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "24-port, Gigabit"
+      },
+      {
+        "AssetName": "Netgear GS108",
+        "AssetType": "Switch",
+        "Model": "Netgear / GS108",
+        "SerialNumber": "NG-GS108-001",
+        "PurchaseDate": "2020-10-01",
+        "WarrantyExpiryDate": "2022-10-01",
+        "Condition": 1,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "8-port, Gigabit"
+      },
+      {
+        "AssetName": "Logitech C920",
+        "AssetType": "Webcam",
+        "Model": "Logitech / C920",
+        "SerialNumber": "LG-C920-001",
+        "PurchaseDate": "2021-01-20",
+        "WarrantyExpiryDate": "2023-01-20",
+        "Condition": 0,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "1080p webcam"
+      },
+      {
+        "AssetName": "Dell UltraSharp 27",
+        "AssetType": "Monitor",
+        "Model": "Dell / UltraSharp U2720Q",
+        "SerialNumber": "DL-U27-001",
+        "PurchaseDate": "2021-12-05",
+        "WarrantyExpiryDate": "2023-12-05",
+        "Condition": 0,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "27\" 4K, IPS"
+      },
+      {
+        "AssetName": "Samsung Odyssey G7",
+        "AssetType": "Monitor",
+        "Model": "Samsung / Odyssey G7 27\"",
+        "SerialNumber": "SM-OG7-001",
+        "PurchaseDate": "2022-09-18",
+        "WarrantyExpiryDate": "2024-09-18",
+        "Condition": 0,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "27\" QHD, 240Hz, Curved"
+      },
+      {
+        "AssetName": "WD MyPassport 1TB",
+        "AssetType": "External HDD",
+        "Model": "Western Digital / MyPassport 1TB",
+        "SerialNumber": "WD-1TB-001",
+        "PurchaseDate": "2019-06-02",
+        "WarrantyExpiryDate": "2021-06-02",
+        "Condition": 0,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "1TB, USB 3.0"
+      },
+      {
+        "AssetName": "Seagate Expansion 2TB",
+        "AssetType": "External HDD",
+        "Model": "Seagate / Expansion 2TB",
+        "SerialNumber": "SG-2TB-001",
+        "PurchaseDate": "2020-02-11",
+        "WarrantyExpiryDate": "2022-02-11",
+        "Condition": 2,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "2TB, USB 3.0"
+      },
+      {
+        "AssetName": "APC BX600C-IN",
+        "AssetType": "UPS",
+        "Model": "APC / BX600C-IN",
+        "SerialNumber": "APC-600-001",
+        "PurchaseDate": "2018-03-25",
+        "WarrantyExpiryDate": "2020-03-25",
+        "Condition": 2,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "600VA, Line-interactive"
+      },
+      {
+        "AssetName": "Sony Projector VPL",
+        "AssetType": "Projector",
+        "Model": "Sony / VPL Series",
+        "SerialNumber": "SN-VPL-001",
+        "PurchaseDate": "2017-11-07",
+        "WarrantyExpiryDate": "2018-11-07",
+        "Condition": 3,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "LCD projector, 3000 lumens"
+      },
+      {
+        "AssetName": "HP ScanJet Pro 2000",
+        "AssetType": "Scanner",
+        "Model": "HP / ScanJet Pro 2000",
+        "SerialNumber": "HP-SJ2000-001",
+        "PurchaseDate": "2021-05-16",
+        "WarrantyExpiryDate": "2023-05-16",
+        "Condition": 2,
+        "Status": 0,
+        "IsSpare": false,
+        "Specifications": "Sheet-feed scanner, duplex"
+      },
+      {
+        "AssetName": "HP Pro 2000",
+        "AssetType": "Scanner",
+        "Model": "HP / SPro 2000",
+        "SerialNumber": "HP-SJ2000-701",
+        "PurchaseDate": "2021-05-16",
+        "WarrantyExpiryDate": "2023-05-16",
+        "Condition": 2,
+        "Status": 2,
+        "IsSpare": false,
+        "Specifications": "Sheet-feed scanner, duplex"
+      },
+      {
+        "AssetName": "HP ScanJet 2000",
+        "AssetType": "Scanner",
+        "Model": "HP / ScanJet 2000",
+        "SerialNumber": "HP-SJ2000-006",
+        "PurchaseDate": "2021-05-16",
+        "WarrantyExpiryDate": "2023-05-16",
+        "Condition": 2,
+        "Status": 2,
+        "IsSpare": false,
+        "Specifications": "Sheet-feed scanner, duplex"
+      },
+      {
+        "AssetName": "ScanJet Pro 2000",
+        "AssetType": "Scanner",
+        "Model": "ScanJet Pro 2000",
+        "SerialNumber": "HP-SJ2000-008",
+        "PurchaseDate": "2021-05-16",
+        "WarrantyExpiryDate": "2023-05-16",
+        "Condition": 2,
+        "Status": 2,
+        "IsSpare": false,
+        "Specifications": "Sheet-feed scanner, duplex"
+      }
+    ]
+  }
+
+

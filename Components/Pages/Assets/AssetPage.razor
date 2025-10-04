@@ -1,0 +1,304 @@
+﻿@page "/assets"
+@using AssetManagment.Models.DTO
+@using AssetManagment.Models.Enums
+@using AssetManagment.Services.Interfaces
+@inject IAssetQueryService QueryService
+@inject IAssetService AssetService
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+@implements IDisposable
+
+<h3>Assets</h3>
+
+<div class="d-flex gap-3 mb-3 align-items-start">
+    <div class="border rounded p-2">
+        <div class="fw-semibold">Types</div>
+        @if (filterValues == null)
+        {
+            <div>Loading...</div>
+        }
+        else
+        {
+            <div style="max-height:150px; overflow:auto; min-width:180px;">
+                <div>
+                    <input type="checkbox" id="types_all" checked="@AllTypesSelected" @onclick="ToggleAllTypes" />
+                    <label for="types_all" class="ms-1">All</label>
+                </div>
+                @foreach (var t in filterValues.AssetTypes)
+                {
+                    var id = $"type_{t.GetHashCode()}";
+                    <div>
+                        <input type="checkbox" id="@id" @onchange="(() => ToggleType(t))" checked="@selectedTypes.Contains(t)" />
+                        <label for="@id" class="ms-1">@t</label>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="border rounded p-2">
+        <div class="fw-semibold">Statuses</div>
+        @if (filterValues == null)
+        {
+            <div>Loading...</div>
+        }
+        else
+        {
+            <div style="max-height:150px; overflow:auto; min-width:160px;">
+                <div>
+                    <input type="checkbox" id="status_all" checked="@AllStatusesSelected" @onclick="ToggleAllStatuses" />
+                    <label for="status_all" class="ms-1">All</label>
+                </div>
+                @foreach (var kv in filterValues.Statuses)
+                {
+                    var id = $"status_{kv.Key}";
+                    <div>
+                        <input type="checkbox" id="@id" @onchange="(() => ToggleStatus(kv.Key))" checked="@selectedStatuses.Contains(kv.Key)" />
+                        <label for="@id" class="ms-1">@kv.Value</label>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="d-flex flex-column ms-auto">
+        <div class="mt-2">
+            <button class="btn btn-secondary me-2" @onclick="ClearFilters">Clear</button>
+            <button class="btn btn-primary" @onclick="OpenAdd">+ Add Asset</button>
+        </div>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <p>Loading assets...</p>
+}
+else if (paged == null || paged.Items.Count == 0)
+{
+    <p>No assets found.</p>
+}
+else
+{
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Make / Model</th>
+                <th>Serial</th>
+                <th>Purchase</th>
+                <th>Warranty</th>
+                <th>Condition</th>
+                <th>Status</th>
+                <th>Spare</th>
+                <th>Specs</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var a in paged.Items)
+            {
+                <tr>
+                    <td>@a.AssetName</td>
+                    <td>@a.AssetType</td>
+                    <td>@a.Model</td>
+                    <td>@a.SerialNumber</td>
+                    <td>@(a.PurchaseDate?.ToString("yyyy-MM-dd") ?? "-")</td>
+                    <td>@(a.WarrantyExpiryDate?.ToString("yyyy-MM-dd") ?? "-")</td>
+                    <td>@(Enum.Parse<AssetManagment.Models.Enums.AssetCondition>(a.Condition))</td>
+
+                    <td>@(Enum.Parse<AssetManagment.Models.Enums.AssetStatus>(a.Status))</td>
+
+                    <td>@(a.IsSpare ? "Yes" : "No")</td>
+                    <td>
+                        <button class="btn btn-sm btn-link" @onclick="(() => OpenEdit(a.Id))">Edit</button>
+                        <button class="btn btn-sm btn-danger ms-1" @onclick="(() => DeleteAsset(a.Id))">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <nav>
+        <ul class="pagination">
+            <li class="page-item @(pageNumber == 1 ? "disabled" : "")"><button class="page-link" @onclick="(() => Load(pageNumber - 1))">Prev</button></li>
+            @for (int p = 1; p <= paged.TotalPages; p++)
+            {
+                var page = p;
+                <li class="page-item @(p == pageNumber ? "active" : "")"><button class="page-link" @onclick="(() => Load(page))">@p</button></li>
+            }
+            <li class="page-item @(pageNumber == paged.TotalPages ? "disabled" : "")"><button class="page-link" @onclick="(() => Load(pageNumber + 1))">Next</button></li>
+        </ul>
+    </nav>
+}
+
+<!-- Asset add/edit modal -->
+<AssetModal IsOpen="@modalOpen"
+            AssetId="@(editingAssetId == 0 ? (int?)null : editingAssetId)"
+            OnCancelled="CloseModal"
+            OnSaved="HandleSaved" />
+
+@code {
+    // paging + data
+    private PagedResult<AssetSearchResult>? paged;
+    private int pageNumber = 1;
+    private const int pageSize = 10;
+    private bool isLoading;
+
+    private AssetFilterValues? filterValues;
+
+    // filters (same as before)
+    private HashSet<string> selectedTypes = new();
+    private HashSet<int> selectedStatuses = new();
+    private bool _spareOnly;
+    private bool spareOnly
+    {
+        get => _spareOnly;
+        set
+        {
+            if (_spareOnly != value)
+            {
+                _spareOnly = value;
+                OnFilterChanged();
+            }
+        }
+    }
+
+    // modal state
+    private bool modalOpen;
+    private int editingAssetId; // 0 => create
+
+    // debounce
+    private CancellationTokenSource? _debounceCts;
+    private int debounceMs = 400;
+
+    protected override async Task OnInitializedAsync()
+    {
+        filterValues = await QueryService.GetFilterValuesAsync();
+        selectedTypes = new HashSet<string>(filterValues.AssetTypes ?? Enumerable.Empty<string>());
+        selectedStatuses = new HashSet<int>(filterValues.Statuses?.Keys ?? Enumerable.Empty<int>());
+        await Load(1);
+    }
+
+    private bool AllTypesSelected => filterValues != null && selectedTypes.Count == (filterValues.AssetTypes?.Count ?? 0);
+    private bool AllStatusesSelected => filterValues != null && selectedStatuses.Count == (filterValues.Statuses?.Count ?? 0);
+
+    private void ToggleAllTypes()
+    {
+        if (AllTypesSelected) selectedTypes.Clear();
+        else selectedTypes = new HashSet<string>(filterValues!.AssetTypes ?? Enumerable.Empty<string>());
+        OnFilterChanged();
+    }
+
+    private void ToggleAllStatuses()
+    {
+        if (AllStatusesSelected) selectedStatuses.Clear();
+        else selectedStatuses = new HashSet<int>(filterValues!.Statuses?.Keys ?? Enumerable.Empty<int>());
+        OnFilterChanged();
+    }
+
+    private void ToggleType(string t)
+    {
+        if (selectedTypes.Contains(t)) selectedTypes.Remove(t);
+        else selectedTypes.Add(t);
+        OnFilterChanged();
+    }
+
+    private void ToggleStatus(int s)
+    {
+        if (selectedStatuses.Contains(s)) selectedStatuses.Remove(s);
+        else selectedStatuses.Add(s);
+        OnFilterChanged();
+    }
+
+    private void ClearFilters()
+    {
+        selectedTypes.Clear();
+        selectedStatuses.Clear();
+        spareOnly = false;
+        OnFilterChanged();
+    }
+
+    private void OnFilterChanged()
+    {
+        _debounceCts?.Cancel();
+        _debounceCts?.Dispose();
+        _debounceCts = new CancellationTokenSource();
+        var token = _debounceCts.Token;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(debounceMs, token);
+                if (token.IsCancellationRequested) return;
+                await InvokeAsync(() => Load(1));
+            }
+            catch (TaskCanceledException) { }
+            catch (Exception ex) { Console.Error.WriteLine($"Debounce error: {ex}"); }
+        }, token);
+    }
+
+    private async Task Load(int page)
+    {
+        isLoading = true;
+        pageNumber = Math.Max(1, page);
+        await InvokeAsync(StateHasChanged);
+
+        List<string>? types = (selectedTypes.Count == 0 || filterValues == null) ? null : selectedTypes.ToList();
+        List<int>? statuses = (selectedStatuses.Count == 0 || filterValues == null) ? null : selectedStatuses.ToList();
+
+        paged = await QueryService.SearchAssetsPagedAsync(types, statuses, null,  pageNumber, pageSize);
+
+        if (paged?.Items != null && spareOnly)
+        {
+            var filtered = paged.Items.Where(i => i.IsSpare).ToList();
+            paged.Items = filtered;
+            paged.TotalCount = filtered.Count;
+        }
+
+        isLoading = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void OpenAdd()
+    {
+        editingAssetId = 0;
+        modalOpen = true;
+    }
+
+    private void OpenEdit(int assetId)
+    {
+        editingAssetId = assetId;
+        modalOpen = true;
+    }
+
+    private async Task DeleteAsset(int id)
+    {
+        var ok = await JS.InvokeAsync<bool>("confirm", "Delete this asset?");
+        if (!ok) return;
+        await AssetService.DeleteAsync(id); 
+        await Load(pageNumber);
+    }
+
+    private async Task CloseModal()
+    {
+        modalOpen = false;
+        editingAssetId = 0;
+        await Task.CompletedTask;
+    }
+
+    private async Task HandleSaved(AssetSearchResult saved)
+    {
+        modalOpen = false;
+        editingAssetId = 0;
+        await Load(pageNumber);
+    }
+
+    public void Dispose()
+    {
+        _debounceCts?.Cancel();
+        _debounceCts?.Dispose();
+    }
+}

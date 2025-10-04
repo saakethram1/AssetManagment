@@ -1,0 +1,154 @@
+﻿@using AssetManagment.Models.DTO
+@using AssetManagment.Models.Enums
+@using AssetManagment.Services.Interfaces
+@inject IAssetService AssetService
+
+@if (IsOpen)
+{
+    <div class="amodal-backdrop" @onclick="Cancel"></div>
+
+    <div class="amodal d-flex" role="dialog" aria-modal="true" style="max-width:700px;">
+        <EditForm Model="@Model" OnValidSubmit="Save">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="amodal-header d-flex justify-content-between align-items-center">
+                <h5 class="amodal-title">@Title</h5>
+                <button class="btn-close" type="button" @onclick="Cancel" aria-label="Close"></button>
+            </div>
+
+            <div class="amodal-body">
+                @if (isLoading)
+                {
+                    <div>Loading...</div>
+                }
+                else
+                {
+                    <div class="row g-2">
+
+                        <div class="col-md-6">
+                            <label class="form-label">Name</label>
+                            <InputText class="form-control" @bind-Value="Model.AssetName" />
+                            <ValidationMessage For="@(() => Model.AssetName)" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Type</label>
+                            <InputText class="form-control" @bind-Value="Model.AssetType" />
+                            <ValidationMessage For="@(() => Model.AssetType)" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Make / Model</label>
+                            <InputText class="form-control" @bind-Value="Model.Model" />
+                            <ValidationMessage For="@(() => Model.Model)" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Serial Number</label>
+                            <InputText class="form-control" @bind-Value="Model.SerialNumber" />
+                            <ValidationMessage For="@(() => Model.SerialNumber)" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Purchase Date</label>
+                            <InputDate class="form-control" @bind-Value="Model.PurchaseDate" />
+                            <ValidationMessage For="@(() => Model.PurchaseDate)" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Warranty Expiry</label>
+                            <InputDate class="form-control" @bind-Value="Model.WarrantyExpiryDate" />
+                            <ValidationMessage For="@(() => Model.WarrantyExpiryDate)" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Condition</label>
+                            <InputSelect class="form-select" @bind-Value="Model.Condition">
+                                <option value="">-- select --</option>
+                                <option>New</option>
+                                <option>Good</option>
+                                <option>NeedsRepair</option>
+                                <option>Damaged</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => Model.Condition)" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            <InputSelect class="form-select" @bind-Value="Model.Status">
+                                <option value="">-- select --</option>
+                                @foreach (var s in Enum.GetNames(typeof(AssetStatus)))
+                                {
+                                    <option value="@s">@s</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => Model.Status)" />
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-check mb-2">
+                                <InputCheckbox class="form-check-input" @bind-Value="Model.IsSpare" id="isSpare" />
+                                <label class="form-check-label" for="isSpare">Is Spare</label>
+                            </div>
+                            <ValidationMessage For="@(() => Model.IsSpare)" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Specifications / Details</label>
+                            <InputTextArea class="form-control" @bind-Value="Model.Specifications" Rows="3" />
+                            <ValidationMessage For="@(() => Model.Specifications)" />
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="amodal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </EditForm>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public int? AssetId { get; set; }
+    [Parameter] public string Title { get; set; } = "Add / Edit Asset";
+    [Parameter] public EventCallback OnCancelled { get; set; }
+    [Parameter] public EventCallback<AssetSearchResult> OnSaved { get; set; }
+
+    private AssetSearchResult Model { get; set; } = new();
+    private bool isLoading;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!IsOpen) return;
+
+        Model = new AssetSearchResult();
+
+        if (AssetId.HasValue)
+        {
+            isLoading = true;
+            var dto = await AssetService.GetAssetByIdAsync(AssetId.Value);
+            if (dto != null)
+            {
+                Model = dto;
+            }
+            isLoading = false;
+        }
+    }
+
+    private async Task Save()
+    {
+        AssetSearchResult saved;
+        if (Model.Id > 0)
+            saved = await AssetService.UpdateAsync(Model);
+        else
+            saved = await AssetService.CreateAsync(Model);
+
+        await OnSaved.InvokeAsync(saved);
+    }
+
+    private async Task Cancel() => await OnCancelled.InvokeAsync();
+}
